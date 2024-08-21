@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Test with User Input</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.1.4/synaptic.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            display: grid;
+            place-items: center;
+            height: 115vh;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+        input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+    
+
+ footer {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+     width: 100%;
+    }
+    footer a {
+        color: #00bcd4;
+        text-decoration: none;
+    }
+    footer a:hover {
+        text-decoration: underline;
+    }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Toplama AI</h1>
+        <form id="inputForm">
+            <label for="input1">Sayı 1 (0-100):</label>
+            <input type="number" id="input1" name="input1" min="0" max="100" required>
+            <label for="input2">Sayı 2 (0-100):</label>
+            <input type="number" id="input2" name="input2" min="0" max="100" required>
+            <button type="submit">Topla!</button>
+        </form>
+        <p id="result"></p>
+    </div>
+    <footer>
+    <p>&copy; 2024 Toplama AI. Bu proje eğlence ve deney amaçlıdır ve isteyen geliştirebilir.</p>
+    <p>Not: AI genelde yanlış cevap verebilir, lütfen güvenmeyiniz.</p>
+    </footer>
+    <script>
+        // Model JSON dosyasının URL'si
+        const modelURL = 'model.json';
+
+        // Modeli yükle
+        let myNetwork;
+
+        fetch(modelURL)
+            .then(response => response.json())
+            .then(modelJSON => {
+                // Model JSON'dan ağı oluştur
+                const { Layer, Network } = synaptic;
+                myNetwork = Network.fromJSON(modelJSON);
+            })
+            .catch(error => console.error('Model yüklenirken bir hata oluştu:', error));
+
+        // Form gönderim olayını işle
+        document.getElementById('inputForm').addEventListener('submit', function(event) {
+            event.preventDefault();  // Formun varsayılan gönderimini engelle
+
+            if (myNetwork) {
+                const input1 = parseFloat(document.getElementById('input1').value);
+                const input2 = parseFloat(document.getElementById('input2').value);
+
+                // Verileri normalize et
+                const normalizedInput1 = input1 / 100;
+                const normalizedInput2 = input2 / 100;
+
+                // Modeli test et
+                const result = myNetwork.activate([normalizedInput1, normalizedInput2]);
+                const output = result[0] * 200;  // Çıkışı normalleştir
+
+                // Sonucu göster
+                document.getElementById('result').innerText = `${input1} + ${input2} = ${output.toFixed(2)}`;
+            } else {
+                document.getElementById('result').innerText = 'Model henüz yüklenmedi.';
+            }
+        });
+    </script>
+</body>
+</html>
