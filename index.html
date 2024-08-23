@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toplama AI</title>
-    <link rel="icon" href="icon.png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.1.4/synaptic.min.js"></script>
+    <title>Neural Network Addition</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -34,7 +32,7 @@
             margin: 10px 0 5px;
             color: #555;
         }
-        input[type="text"] {
+        input[type="number"] {
             width: calc(100% - 22px);
             padding: 10px;
             border: 1px solid #ccc;
@@ -81,92 +79,72 @@
     footer a:hover {
         text-decoration: underline;
     }
+        mark{
+            background-color: black;
+            border-radius: 8px;
+            color: white;
+        }
+        select{
+            padding: 5px 30px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
-    <div>
-        <h1>Toplama AI</h1>
-        <form id="inputForm">
-            <label for="input1">Sayı 1 (0-100 veya Sözel):</label>
-            <input type="text" id="input1" name="input1" required>
-            <label for="input2">Sayı 2 (0-100 veya Sözel):</label>
-            <input type="text" id="input2" name="input2" required>
-            <button type="submit">Topla!</button>
-        </form>
-        <p id="result"></p>
-    </div>
-    <footer>
-    <p>&copy; 2024 Toplama AI. Bu proje eğlence ve deney amaçlıdır ve isteyen geliştirebilir.</p>
-    <p>Not: AI genelde yanlış cevap verebilir, lütfen güvenmeyiniz.</p>
-    </footer>
+    <h1>Parodo<mark>Q</mark></h1>
+    <select>
+        <option value="2"><p>ParodoQ </p>model 1</option>
+        <option value="3"><p>ParodoQ </p>model 2</option>
+        <option value="4"><p>ParodoQ </p>model 3</option>
+    </select>
+    <form id="additionForm">
+        <label for="input1">Sayı 1:</label>
+        <input type="number" id="input1" name="input1"  required>
+        <br>
+        <label for="input2">Sayı 2:</label>
+        <input type="number" id="input2" name="input2" required>
+        <br>
+        <button type="submit">Topla!</button>
+    </form>
+    <p id="result"></p>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.1.4/synaptic.js"></script>
     <script>
-        // Model JSON dosyasının URL'si
-        const modelURL = 'model.json';
-
-        // Modeli yükle
-        let myNetwork;
-
-        fetch(modelURL)
+        const maxInputValue = 1000;
+        const maxOutputValue = 2000;
+let modelNum = document.querySelector('select').value;
+        // Dinamik normalizasyon için fonksiyonlar
+        const normalizeInput = (value, max) => value / max;
+        const denormalizeOutput = (value, max) => value * max;
+function createNeuralNetwork() {
+        // Model JSON'u yükle
+        fetch(`model${modelNum}.json`)
             .then(response => response.json())
             .then(modelJSON => {
-                // Model JSON'dan ağı oluştur
-                const { Layer, Network } = synaptic;
-                myNetwork = Network.fromJSON(modelJSON);
+                const myNetwork = synaptic.Network.fromJSON(modelJSON);
+
+                document.getElementById('additionForm').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    const input1 = parseFloat(document.getElementById('input1').value);
+                    const input2 = parseFloat(document.getElementById('input2').value);
+                    
+                    const normalizedInput1 = normalizeInput(input1, maxInputValue);
+                    const normalizedInput2 = normalizeInput(input2, maxInputValue);
+
+                    const result = myNetwork.activate([normalizedInput1, normalizedInput2]);
+                    const denormalizedResult = denormalizeOutput(result[0], maxOutputValue);
+                    
+                    document.getElementById('result').innerText = `${input1} + ${input2} = ${denormalizedResult.toFixed(2)}`;
+                });
             })
-            .catch(error => console.error('Model yüklenirken bir hata oluştu:', error));
-
-        // Sözel sayıları sayılara çeviren işlev
-        function verbalToNumber(word) {
-            const verbalNumbers = {
-                "sıfır": 0, "bir": 1, "iki": 2, "üç": 3, "dört": 4, "beş": 5, "altı": 6, "yedi": 7, 
-                "sekiz": 8, "dokuz": 9, "on": 10, "on bir": 11, "on iki": 12, "on üç": 13, "on dört": 14, 
-                "on beş": 15, "on altı": 16, "on yedi": 17, "on sekiz": 18, "on dokuz": 19, "yirmi": 20, 
-                "yirmi bir": 21, "yirmi iki": 22, "yirmi üç": 23, "yirmi dört": 24, "yirmi beş": 25, 
-                "yirmi altı": 26, "yirmi yedi": 27, "yirmi sekiz": 28, "yirmi dokuz": 29, "otuz": 30, 
-                "otuz bir": 31, "otuz iki": 32, "otuz üç": 33, "otuz dört": 34, "otuz beş": 35, 
-                "otuz altı": 36, "otuz yedi": 37, "otuz sekiz": 38, "otuz dokuz": 39, "kırk": 40, 
-                "kırk bir": 41, "kırk iki": 42, "kırk üç": 43, "kırk dört": 44, "kırk beş": 45, 
-                "kırk altı": 46, "kırk yedi": 47, "kırk sekiz": 48, "kırk dokuz": 49, "elli": 50, 
-                "elli bir": 51, "elli iki": 52, "elli üç": 53, "elli dört": 54, "elli beş": 55, 
-                "elli altı": 56, "elli yedi": 57, "elli sekiz": 58, "elli dokuz": 59, "altmış": 60, 
-                "altmış bir": 61, "altmış iki": 62, "altmış üç": 63, "altmış dört": 64, "altmış beş": 65, 
-                "altmış altı": 66, "altmış yedi": 67, "altmış sekiz": 68, "altmış dokuz": 69, "yetmiş": 70, 
-                "yetmiş bir": 71, "yetmiş iki": 72, "yetmiş üç": 73, "yetmiş dört": 74, "yetmiş beş": 75, 
-                "yetmiş altı": 76, "yetmiş yedi": 77, "yetmiş sekiz": 78, "yetmiş dokuz": 79, "seksen": 80, 
-                "seksen bir": 81, "seksen iki": 82, "seksen üç": 83, "seksen dört": 84, "seksen beş": 85, 
-                "seksen altı": 86, "seksen yedi": 87, "seksen sekiz": 88, "seksen dokuz": 89, "doksan": 90, 
-                "doksan bir": 91, "doksan iki": 92, "doksan üç": 93, "doksan dört": 94, "doksan beş": 95, 
-                "doksan altı": 96, "doksan yedi": 97, "doksan sekiz": 98, "doksan dokuz": 99, "yüz": 100
-            };
-            return verbalNumbers[word.toLowerCase().trim()] || parseFloat(word);
+            .catch(error => {
+                console.error('Model yüklenirken hata oluştu:', error);
+            });
         }
-
-        // Form gönderim olayını işle
-        document.getElementById('inputForm').addEventListener('submit', function(event) {
-            event.preventDefault();  // Formun varsayılan gönderimini engelle
-
-            if (myNetwork) {
-                const input1 = verbalToNumber(document.getElementById('input1').value);
-                const input2 = verbalToNumber(document.getElementById('input2').value);
-
-                if (isNaN(input1) || isNaN(input2)) {
-                    document.getElementById('result').innerText = 'Geçerli sayılar giriniz.';
-                    return;
-                }
-
-                // Verileri normalize et
-                const normalizedInput1 = input1 / 100;
-                const normalizedInput2 = input2 / 100;
-
-                // Modeli test et
-                const result = myNetwork.activate([normalizedInput1, normalizedInput2]);
-                const output = result[0] * 200;  // Çıkışı normalleştir
-
-                // Sonucu göster
-                document.getElementById('result').innerText = `${input1} + ${input2} = ${output.toFixed(2)}`;
-            } else {
-                document.getElementById('result').innerText = 'Model henüz yüklenmedi.';
-            }
+        document.querySelector('select').addEventListener('change', function() {
+            modelNum = this.value;
+            createNeuralNetwork();
         });
     </script>
 </body>
